@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 
 class GameBoardRenderer {
 
+
     @Composable
     @Preview
     fun getSpielfeldFromGameBoard() {
@@ -38,6 +39,7 @@ class GameBoardRenderer {
         val spielfeld = gameBoard.getSpielfeld()
         // Use the spielfeld variable here
         GridDemo(gridArray = spielfeld)
+        showPlayer()
     }
 
     @Composable
@@ -118,6 +120,12 @@ class GameBoardRenderer {
             ".d".toRegex().matches(value) -> "d"
             else -> ""
         }
+    }
+
+    @Composable
+    fun showPlayer(){
+        val HUD = HUD()
+        HUD.BottomLeftComposable()
     }
 
 }
