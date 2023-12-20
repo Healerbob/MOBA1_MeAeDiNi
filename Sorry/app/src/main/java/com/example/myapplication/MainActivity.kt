@@ -65,6 +65,7 @@ class MainActivity : ComponentActivity() {
     fun GameBoardContent() {
         val gameBoard = GameBoard(playerCount)
         gameBoard.Render()
+        gameBoard.BottomLeftComposable()
     }
 
     @Composable
