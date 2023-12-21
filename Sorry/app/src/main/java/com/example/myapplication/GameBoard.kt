@@ -40,6 +40,8 @@ class GameBoard (playerCount: Int) {
 
     var diceResult: Int = 3
 
+    var firstRun = true
+
 
     init {
         fields = FieldMapper.createFields()
@@ -88,6 +90,10 @@ class GameBoard (playerCount: Int) {
                 }
             }
         }
+        if (firstRun) {
+            initializeGameLogic()
+            firstRun = false
+        }
     }
 
     private fun movePawn(clickedField: Field, diceResult: Int) {
@@ -105,7 +111,10 @@ class GameBoard (playerCount: Int) {
                     modifier = Modifier
                         .fillMaxSize(0.9f)
                         .border(1.dp, Color.Black, CircleShape)
-                        .background(field.backgroundColor, CircleShape)  // Verwende die Hintergrundfarbe aus dem Field-Objekt
+                        .background(
+                            field.backgroundColor,
+                            CircleShape
+                        )  // Verwende die Hintergrundfarbe aus dem Field-Objekt
                         .clickable {
                             onCellClicked(field)
                         }
@@ -125,10 +134,10 @@ class GameBoard (playerCount: Int) {
     @Composable
     fun getCellColor(value: String): Color {
         return when {
-             "r.".toRegex().matches(value) -> Color.Red
-             "b.".toRegex().matches(value) -> Color.Blue
-             "g.".toRegex().matches(value) -> Color.Green
-             "y.".toRegex().matches(value) -> Color.Yellow
+            "r.".toRegex().matches(value) -> Color.Red
+            "b.".toRegex().matches(value) -> Color.Blue
+            "g.".toRegex().matches(value) -> Color.Green
+            "y.".toRegex().matches(value) -> Color.Yellow
             else -> Color.White
         }
     }
@@ -150,7 +159,7 @@ class GameBoard (playerCount: Int) {
     fun BottomLeftComposable() {
         val dice = Dice()
         var diceResult by remember { mutableStateOf(0) }
-        var playerName by remember { mutableStateOf(currentPlayer)}
+        var playerName by remember { mutableStateOf(currentPlayer) }
 
 
 
@@ -189,12 +198,40 @@ class GameBoard (playerCount: Int) {
 
     }
 
+    fun initializeGameLogic() {
+        var players = listOf("r", "b", "g", "y")
+        players.forEach { currentPlayer ->
+            for (i in 1..4) {
+                val player = players[(players.indexOf(currentPlayer) + 1) % players.size]
+                occupieField(currentPlayer, "$player$i")
+            }
+            println(getOccupiedFields(currentPlayer))
+        }
+    }
+
 
     fun evaluateMove(currentPlayer: String, diceResult: Int) {
+
         if (diceResult <= 6) {
+            getOccupiedFields(currentPlayer)
+            if (!hasFigureAtHome(currentPlayer)) {
+                if (isStartOccupied(currentPlayer)) {
+                    getNextField("01", diceResult)
+                    highlightPossibleMoves(currentPlayer, diceResult)
+                }
+
+            }
+
+
+            if (isStartOccupied(currentPlayer)) {
+                println("Start ist besetzt")
+                println(getOccupiedFields(currentPlayer))
+            }
+
             // Beispiel: Ändere die Hintergrundfarbe des Fields mit der ID "00" auf Color.Red
-            fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.backgroundColor = getPlayerColor(currentPlayer)
-            fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied = currentPlayer
+            fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.backgroundColor =
+                getPlayerColor(currentPlayer)
+            occupieField(currentPlayer, getPlayerStart(currentPlayer))
 
             println("Klick")
 
@@ -205,23 +242,122 @@ class GameBoard (playerCount: Int) {
     fun getPlayerColor(currentPlayer: String): Color {
         return when (currentPlayer) {
             "r" -> Color.Red
-            "g" -> Color.Yellow
             "b" -> Color.Blue
-            "y" -> Color.Green
+            "g" -> Color.Green
+            "y" -> Color.Yellow
             else -> Color.White
         }
     }
 
+
     fun getPlayerStart(currentPlayer: String): String {
         return when (currentPlayer) {
             "r" -> "00"
-            "g" -> "10"
-            "b" -> "20"
+            "b" -> "10"
+            "g" -> "20"
             "y" -> "30"
             else -> ""
         }
     }
 
+    fun isStartOccupied(currentPlayer: String): Boolean {
+        return when (currentPlayer) {
+            "r" -> fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied == "r"
+            "b" -> fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied == "b"
+            "g" -> fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied == "g"
+            "y" -> fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied == "y"
+            else -> false
+        }
+    }
 
+    fun getOccupiedFields(currentPlayer: String): List<String> {
+        return when (currentPlayer) {
+            "r" -> fields.flatten().filter { it.occupied == "r" }.map { it.id }
+            "b" -> fields.flatten().filter { it.occupied == "b" }.map { it.id }
+            "g" -> fields.flatten().filter { it.occupied == "g" }.map { it.id }
+            "y" -> fields.flatten().filter { it.occupied == "y" }.map { it.id }
+            else -> listOf()
+        }
+    }
+
+    fun occupieField(currentPlayer: String, fieldId: String) {
+        fields.flatten().find { it.id == fieldId }?.occupied = currentPlayer
+    }
+
+    fun hasFigureAtHome(currentPlayer: String): Boolean {
+        when (getOccupiedFields(currentPlayer)) {
+            listOf(
+                "${currentPlayer}1",
+                "${currentPlayer}2",
+                "${currentPlayer}3",
+                "${currentPlayer}4"
+            ) -> {
+                println("$currentPlayer hat alle Figuren im Heimfeld")
+                return true
+            }
+
+            else -> {
+                println("$currentPlayer hat noch nicht alle Figuren im Heimfeld")
+                return false
+            }
+
+
+        }
+    }
+
+    fun moveOutOfStart(currentPlayer: String) {
+        fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.backgroundColor =
+            getPlayerColor(currentPlayer)
+    }
+
+    fun move(currentPlayer: String, diceResult: Int) {
+
+    }
+
+    fun highlightPossibleMoves(currentPlayer: String, diceResult: Int) {
+        val possibleFields = fields.flatten()
+            .filter { it.occupied == currentPlayer }
+            .mapNotNull { it.id.toIntOrNull()?.let { num -> (num + diceResult).toString() } }
+
+        val felder = fields
+        felder.flatten().forEach { feld ->
+            if (possibleFields.contains(feld.id)) {
+                // Hervorhebung für mögliche Felder
+                felder.flatten().find { it.id == feld.id }?.backgroundColor = Color.Magenta
+                println("Field: ${feld.id}")
+                updateBoard()
+            } else {
+                // Zurücksetzen der Hervorhebung für andere Felder
+
+            }
+        }
+
+
+    }
+
+    fun getNextField(fieldId: String, diceResult: Int) {
+        var currentFieldId = fieldId
+
+        for (i in 0 until diceResult) {
+            val currentField = fields.flatten().find { it.id == currentFieldId }
+
+            if (currentField == null) {
+                println("Fehler: Das aktuelle Feld wurde nicht gefunden.")
+                return
+            }
+
+            val nextFieldId = currentField.nextField[currentFieldId]
+            println(nextFieldId)
+
+            if (nextFieldId == null) {
+                println("Fehler: Das nächste Feld wurde nicht gefunden.")
+                return
+            }
+
+            currentFieldId = nextFieldId
+        }
+
+        println("nextField: $currentFieldId")
+    }
 
 }
