@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -32,12 +33,13 @@ import androidx.compose.ui.unit.dp
 class GameBoard (playerCount: Int) {
     private val playerColors = listOf("r", "g", "b", "y")
 
-    val fields: Array<Array<Field>>
+    var fields: Array<Array<Field>>
     val players: List<String> = playerColors.subList(0, playerCount)
 
     var currentPlayer: String
 
     var diceResult: Int = 3
+
 
     init {
         fields = FieldMapper.createFields()
@@ -49,17 +51,24 @@ class GameBoard (playerCount: Int) {
         currentPlayer = players[(players.indexOf(currentPlayer) + 1) % players.size]
     }
 
+    var boardUpdate by mutableStateOf(0)
+
+    // Funktion zum Aktualisieren des Spielfelds
+    fun updateBoard() {
+        boardUpdate += 1
+    }
 
 
     @Composable
     fun Render() {
-        Box (
+        val updatedState = rememberUpdatedState(boardUpdate)
+        Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
-            LazyColumn (
+            LazyColumn(
                 modifier = Modifier
                     .border(2.dp, Color.Black)
                     .background(Color(255, 255, 180))
@@ -86,23 +95,23 @@ class GameBoard (playerCount: Int) {
     }
 
     @Composable
-    fun GridCell(value: Field, onCellClicked: (Field) -> Unit) {
+    fun GridCell(field: Field, onCellClicked: (Field) -> Unit) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(32.dp)
         ) {
-            if ("FF" != value.id) {
+            if ("FF" != field.id) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize(0.9f)
                         .border(1.dp, Color.Black, CircleShape)
-                        .background(getCellColor(value.id), CircleShape)
+                        .background(field.backgroundColor, CircleShape)  // Verwende die Hintergrundfarbe aus dem Field-Objekt
                         .clickable {
-                            onCellClicked(value)
+                            onCellClicked(field)
                         }
                 ) {
                     Text(
-                        text = getCellSymbol(value.id),
+                        text = getCellSymbol(field.id),
                         color = Color.Black,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.align(Alignment.Center)
@@ -112,13 +121,14 @@ class GameBoard (playerCount: Int) {
         }
     }
 
+
     @Composable
     fun getCellColor(value: String): Color {
         return when {
-            "00" == value || "r.".toRegex().matches(value) -> Color.Red
-            "10" == value || "b.".toRegex().matches(value) -> Color.Blue
-            "20" == value || "g.".toRegex().matches(value) -> Color.Green
-            "30" == value || "y.".toRegex().matches(value) -> Color.Yellow
+             "r.".toRegex().matches(value) -> Color.Red
+             "b.".toRegex().matches(value) -> Color.Blue
+             "g.".toRegex().matches(value) -> Color.Green
+             "y.".toRegex().matches(value) -> Color.Yellow
             else -> Color.White
         }
     }
@@ -163,6 +173,7 @@ class GameBoard (playerCount: Int) {
                         onClick = {
                             // Würfeln und das Ergebnis speichern
                             diceResult = dice.roll()
+                            evaluateMove(currentPlayer = currentPlayer, diceResult = diceResult)
                             updatePlayer()
                             playerName = currentPlayer
 
@@ -177,5 +188,40 @@ class GameBoard (playerCount: Int) {
         }
 
     }
+
+
+    fun evaluateMove(currentPlayer: String, diceResult: Int) {
+        if (diceResult <= 6) {
+            // Beispiel: Ändere die Hintergrundfarbe des Fields mit der ID "00" auf Color.Red
+            fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.backgroundColor = getPlayerColor(currentPlayer)
+            fields.flatten().find { it.id == getPlayerStart(currentPlayer) }?.occupied = currentPlayer
+
+            println("Klick")
+
+            updateBoard()
+        }
+    }
+
+    fun getPlayerColor(currentPlayer: String): Color {
+        return when (currentPlayer) {
+            "r" -> Color.Red
+            "g" -> Color.Yellow
+            "b" -> Color.Blue
+            "y" -> Color.Green
+            else -> Color.White
+        }
+    }
+
+    fun getPlayerStart(currentPlayer: String): String {
+        return when (currentPlayer) {
+            "r" -> "00"
+            "g" -> "10"
+            "b" -> "20"
+            "y" -> "30"
+            else -> ""
+        }
+    }
+
+
 
 }

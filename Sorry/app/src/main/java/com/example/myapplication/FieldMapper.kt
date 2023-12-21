@@ -1,6 +1,11 @@
 package com.example.myapplication
 
-class Field(val id: String, var occupied: String, var clickable: Boolean, val nextField: HashMap<String, String>)
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.graphics.Color
+
+class Field(val id: String, var occupied: String, var clickable: Boolean, val nextField: HashMap<String, String>, var backgroundColor: Color) {
+    val backgroundColorState = mutableStateOf(backgroundColor)
+}
 
 class FieldMapper {
     companion object {
@@ -18,16 +23,37 @@ class FieldMapper {
             arrayOf("y3", "y4", "FF", "FF", "30", "29", "28", "FF", "FF", "g3", "g4"),
         )
 
+
+        val fields = mutableListOf<Array<Field>>()
         fun createFields(): Array<Array<Field>> {
-            val fields = mutableListOf<Array<Field>>()
+
             fieldLayout.forEach { row ->
                 val rowFields = mutableListOf<Field>()
                 row.forEach { fieldId ->
-                    rowFields.add(Field(fieldId, "", false, findNext(fieldId)))
+                    val backgroundColor =
+                        determineBackgroundColor(fieldId) // Funktion zur Bestimmung der Hintergrundfarbe
+                    rowFields.add(Field(fieldId, "", false, findNext(fieldId), backgroundColor))
                 }
                 fields.add(rowFields.toTypedArray())
             }
             return fields.toTypedArray()
+        }
+
+        private fun determineBackgroundColor(fieldId: String): Color {
+            val flattenedFields = fields.flatMap { it.asIterable() }
+            val field = flattenedFields.find { it.id == fieldId }
+            return field?.backgroundColorState?.value ?: getDefaultColor(fieldId)
+        }
+
+
+        private fun getDefaultColor(fieldId: String): Color {
+            return when {
+                "r.".toRegex().matches(fieldId) -> Color.Red
+                "b.".toRegex().matches(fieldId) -> Color.Blue
+                "g.".toRegex().matches(fieldId) -> Color.Green
+                "y.".toRegex().matches(fieldId) -> Color.Yellow
+                else -> Color.White // Standardfarbe, wenn keine der Bedingungen erfüllt ist
+            }
         }
 
         private fun findNext(fieldId: String): HashMap<String, String> {
@@ -37,7 +63,7 @@ class FieldMapper {
 
             if ("\\D{2}".toRegex().matches(fieldId)) {
                 val firstChar = fieldId[0]
-                return when(val secondChar = fieldId[1]) {
+                return when (val secondChar = fieldId[1]) {
                     'a' -> hashMapOf(Pair("$firstChar", "${secondChar}b"))
                     'b' -> hashMapOf(Pair("$firstChar", "${secondChar}c"))
                     'c' -> hashMapOf(Pair("$firstChar", "${secondChar}d"))
@@ -45,13 +71,18 @@ class FieldMapper {
                 }
             }
 
-            return when(fieldId) {
+            return when (fieldId) {
                 "09" -> hashMapOf(Pair("b", "ba"), Pair("", "10"))
                 "19" -> hashMapOf(Pair("g", "ga"), Pair("", "20"))
                 "29" -> hashMapOf(Pair("y", "ya"), Pair("", "30"))
                 "39" -> hashMapOf(Pair("r", "ra"), Pair("", "00"))
-                else -> hashMapOf(Pair("", "${fieldId.toInt()+1}".padStart(2, '0')))
+                else -> hashMapOf(Pair("", "${fieldId.toInt() + 1}".padStart(2, '0')))
             }
         }
+
+        fun setBackgroundColor(newColor: Color) {
+            var backgroundColor = newColor
+        }
+
     }
 }
