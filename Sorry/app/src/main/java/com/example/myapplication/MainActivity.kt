@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Text(
-                text = "Sorry",
+                text = "Mensch ärgere\ndich nicht!",
                 style = typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
