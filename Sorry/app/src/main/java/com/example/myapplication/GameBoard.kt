@@ -1,14 +1,13 @@
 package com.example.myapplication
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 
-data class Player(val color: String, var name: String, var startIndex: Int)
+data class Player(val id: String, var name: String, var startIndex: Int)
 
 class GameBoardFactory(private val playerCount: Int) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T =
@@ -34,9 +33,9 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
 
     init {
         players.forEach { player ->
-            val field = fields.find { FieldMapper.findStart(player.color) == it.id }
+            val field = fields.find { FieldMapper.findStart(player.id) == it.id }
             player.startIndex = fields.indexOf(field)
-            player.name = mapPlayerName(player.color)
+            player.name = mapPlayerName(player.id)
         }
     }
 
@@ -50,8 +49,8 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
         if (diceResult == 6) {
             reRoll = true
 
-            if (isStartAvailable(currentPlayer.color, currentPlayer.startIndex)) {
-                goToStart(currentPlayer.color, currentPlayer.startIndex)
+            if (isStartAvailable(currentPlayer.id, currentPlayer.startIndex)) {
+                goToStart(currentPlayer.id, currentPlayer.startIndex)
                 moving = false
             }
         }
@@ -59,9 +58,9 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
         if (moving) {
             var availableFields = 0
             fields.filter { it.nextField.isNotEmpty() }.forEach { field ->
-                if (field.occupied == currentPlayer.color) {
-                    val targetField = getTargetField(field, currentPlayer.color, diceResult)
-                    if (targetField != null && targetField.occupied != currentPlayer.color) {
+                if (field.occupied == currentPlayer.id) {
+                    val targetField = getTargetField(field, currentPlayer.id, diceResult)
+                    if (targetField != null && targetField.occupied != currentPlayer.id) {
                         field.clickable = true
                         availableFields++
                     }
@@ -90,12 +89,12 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
     }
 
     fun movePawn(clickedField: Field) {
-        val targetField = getTargetField(clickedField, currentPlayer.color, diceResult)!!
+        val targetField = getTargetField(clickedField, currentPlayer.id, diceResult)!!
         if (targetField.occupied != "") {
             kickPawn(targetField)
         }
         clickedField.occupied = ""
-        targetField.occupied = currentPlayer.color
+        targetField.occupied = currentPlayer.id
 
         fields.forEach {
             it.clickable = false
@@ -132,11 +131,12 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
         if (!reRoll) {
             currentPlayer = players[(players.indexOf(currentPlayer) + 1) % players.size]
         } else {
+            currentPlayer = players[(players.indexOf(currentPlayer))]
             reRoll = false
         }
 
         diceResult = 0
-        checkVictory(currentPlayer.color)
+        checkVictory(currentPlayer.id)
     }
 
     private fun isStartAvailable(color: String, fieldIndex: Int): Boolean {
@@ -167,14 +167,13 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
     }
 
     private fun checkVictory(color: String) {
-        var won = true
-        fields.filter { "${color}\\D".toRegex().matches(it.id) }
-            .forEach { field ->
-            if (field.occupied != color) {
-                won = false
+        fields.forEach { field ->
+            when(field.id) {
+                "${color}a" -> finished = finished && field.occupied != ""
+                "${color}b" -> finished = finished && field.occupied != ""
+                "${color}c" -> finished = finished && field.occupied != ""
+                "${color}d" -> finished = finished && field.occupied != ""
             }
         }
-
-        finished = won
     }
 }

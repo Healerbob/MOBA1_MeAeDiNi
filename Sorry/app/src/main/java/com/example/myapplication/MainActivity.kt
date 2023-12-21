@@ -142,55 +142,51 @@ class MainActivity : ComponentActivity() {
                 .fillMaxSize()
                 .background(Color.Black)
         ) {
-            LazyVerticalGrid (
-                columns = GridCells.Fixed(model.boardWidth),
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .border(2.dp, Color.Black)
-                    .background(Color(255, 255, 180))
-                    .padding(20.dp)
+                    .background(Color.LightGray)
             ) {
-                items(items = model.fields, key = { it.hashCode() }) { field ->
-                    FieldRender(field) { clickedField ->
-                        if (model.moving && clickedField.clickable) {
-                            model.movePawn(clickedField)
-                            if(model.finished) {
-                                showStartScreen = true
-                            }
-                            model.nextPlayer()
-                        }
-                    }
-                }
-            }
-        }
-
-        Box(
-            contentAlignment = Alignment.BottomCenter,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(20.dp)
-        ) {
-            Column {
                 Text(
                     text = "${model.currentPlayer.name} am Zug",
                     style = typography.bodyLarge,
-                    color = Color.White
+                    color = Color.Black
                 )
-                Row {
-                    Button(
-                        onClick = {
-                            if (!model.moving) {
-                                // Würfeln und das Ergebnis speichern
-                                model.rollDice()
-                                model.initiateTurn()
-                                if (!model.moving) {
-                                    model.nextPlayer()
+
+                LazyVerticalGrid (
+                    columns = GridCells.Fixed(model.boardWidth),
+                    modifier = Modifier
+                        .border(2.dp, Color.Black)
+                        .background(Color(255, 255, 180))
+                        .padding(20.dp)
+                ) {
+                    items(items = model.fields, key = { it.hashCode() }) { field ->
+                        FieldRender(field) { clickedField ->
+                            if (model.moving && clickedField.clickable) {
+                                model.movePawn(clickedField)
+                                if(model.finished) {
+                                    showStartScreen = true
                                 }
+                                model.nextPlayer()
                             }
                         }
-                    ) {
-                        Icon(Icons.Filled.Refresh, contentDescription = "Würfel")
-                        Text("   ${model.diceResult}")
                     }
+                }
+
+                Button(
+                    onClick = {
+                        if (!model.moving) {
+                            // Würfeln und das Ergebnis speichern
+                            model.rollDice()
+                            model.initiateTurn()
+                            if (!model.moving) {
+                                model.nextPlayer()
+                            }
+                        }
+                    }
+                ) {
+                    Icon(Icons.Filled.Refresh, contentDescription = "Würfel")
+                    Text("   ${model.diceResult}")
                 }
             }
         }
@@ -225,7 +221,7 @@ class MainActivity : ComponentActivity() {
                             modifier = Modifier
                                 .fillMaxSize(0.8f)
                                 .border(1.dp, Color.Black, CircleShape)
-                                .background(getPieceColor(value.occupied), CircleShape)
+                                .background(getPlayerColor(value.occupied), CircleShape)
                         )
                     }
                 }
@@ -233,7 +229,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun getPieceColor(player: String): Color {
+    private fun getPlayerColor(player: String): Color {
         return when(player) {
             "r" -> Color.Red
             "b" -> Color.Blue
