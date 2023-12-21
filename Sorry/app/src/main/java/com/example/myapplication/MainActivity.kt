@@ -107,7 +107,7 @@ class MainActivity : ComponentActivity() {
                 }) {
                     Icon(imageVector = Icons.Default.KeyboardArrowLeft, contentDescription = "Remove Player")
                 }
-                Text(text = "${currentPlayerCount}", style = typography.titleSmall)
+                Text(text = "$currentPlayerCount", style = typography.titleSmall)
                 IconButton(onClick = {
                     if (currentPlayerCount < 4) {
                         // Sie können hier eine obere Grenze für die Anzahl der Spieler festlegen
@@ -133,7 +133,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     @Preview
     fun GameBoardContent(model: GameBoard = viewModel()) {
-        var diceResult by remember { mutableStateOf(1) }
+        var diceResult by remember { mutableStateOf(0) }
 
         Box (
             contentAlignment = Alignment.Center,
@@ -151,9 +151,8 @@ class MainActivity : ComponentActivity() {
                 items(model.fields, key = { it.hashCode() }) { field ->
                     FieldRender(field) { clickedField ->
                         Log.d("CellClicked", "Cell clicked: ${clickedField.id}")
-                        if (clickedField.clickable) {
-                            //movePawn(clickedField, diceResult)
-                            model.nextPlayer()
+                        if (model.moving && clickedField.clickable) {
+                            model.movePawn(clickedField, diceResult)
                         }
                     }
                 }
@@ -161,9 +160,10 @@ class MainActivity : ComponentActivity() {
         }
 
         Box(
+            contentAlignment = Alignment.BottomCenter,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(bottom = 1.dp)// Optional: Fügen Sie Padding hinzu, um Abstand zum Rand zu haben
+                .padding(20.dp)
         ) {
             Column {
                 Text(
@@ -178,7 +178,6 @@ class MainActivity : ComponentActivity() {
                                 // Würfeln und das Ergebnis speichern
                                 diceResult = (1..6).random()
                                 model.initiateTurn(diceResult)
-                                model.nextPlayer()
                             }
                         }
                     ) {
