@@ -64,12 +64,13 @@ class MainActivity : ComponentActivity() {
                 ) {
                     // Zeige entweder den Startbildschirm oder das Spielfeld basierend auf dem Zustand an
                     if (showStartScreen) {
-                        StartScreen(onStartButtonClick = {
+                        StartScreen(gameBoard, onStartButtonClick = {
                             showStartScreen = false
-                            gameBoard.playerCount = it
                         })
-                    } else {
+                    } else if (gameBoard.winner == "") {
                         GameBoardContent(gameBoard)
+                    } else {
+                        
                     }
                 }
             }
@@ -77,7 +78,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun StartScreen(onStartButtonClick: (Int) -> Unit) {
+    fun StartScreen(model: GameBoard = viewModel(), onStartButtonClick: (Int) -> Unit) {
         // Lokale Variable, um den Zustand der Anzahl der Spieler zu verfolgen
         var currentPlayerCount by remember { mutableStateOf(playerCount) }
 
@@ -148,9 +149,8 @@ class MainActivity : ComponentActivity() {
                     .background(Color(255, 255, 180))
                     .padding(20.dp)
             ) {
-                items(model.fields, key = { it.hashCode() }) { field ->
+                items(items = model.fields, key = { it.hashCode() }) { field ->
                     FieldRender(field) { clickedField ->
-                        Log.d("CellClicked", "Cell clicked: ${clickedField.id}")
                         if (model.moving && clickedField.clickable) {
                             model.movePawn(clickedField, diceResult)
                         }

@@ -42,11 +42,11 @@ class FieldMapper {
             }
 
             if ("\\D{2}".toRegex().matches(fieldId)) {
-                val firstChar = fieldId[0]
-                return when(val secondChar = fieldId[1]) {
-                    'a' -> hashMapOf(Pair("$firstChar", "${secondChar}b"))
-                    'b' -> hashMapOf(Pair("$firstChar", "${secondChar}c"))
-                    'c' -> hashMapOf(Pair("$firstChar", "${secondChar}d"))
+                val color = fieldId[0]
+                return when(fieldId[1]) {
+                    'a' -> hashMapOf(Pair("$color", "${color}b"))
+                    'b' -> hashMapOf(Pair("$color", "${color}c"))
+                    'c' -> hashMapOf(Pair("$color", "${color}d"))
                     else -> hashMapOf()
                 }
             }

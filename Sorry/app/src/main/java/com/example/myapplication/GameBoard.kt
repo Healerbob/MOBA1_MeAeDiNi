@@ -21,8 +21,9 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
 
     private var reRoll = false
 
-    init {
+    var winner by mutableStateOf("")
 
+    init {
         players.forEach { player ->
             val field = fields.find { FieldMapper.findStart(player.color) == it.id }
             player.startIndex = fields.indexOf(field)
@@ -119,10 +120,14 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
     }
 
     private fun nextPlayer() {
+
         if (!reRoll) {
             currentPlayer = players[(players.indexOf(currentPlayer) + 1) % players.size]
+        } else {
+            reRoll = false
         }
-        reRoll = false
+
+        checkVictory(currentPlayer.color)
     }
 
     private fun isStartAvailable(color: String, fieldIndex: Int): Boolean {
@@ -150,5 +155,19 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
 
         sourceField.occupied = ""
         startField.occupied = color
+    }
+
+    private fun checkVictory(color: String) {
+        var won = true
+        fields.filter { "${color}\\D".toRegex().matches(it.id) }
+            .forEach { field ->
+            if (field.occupied != color) {
+                won = false
+            }
+        }
+
+        if (won) {
+            winner = color
+        }
     }
 }
