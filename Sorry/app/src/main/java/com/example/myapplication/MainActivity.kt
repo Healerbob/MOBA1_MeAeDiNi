@@ -1,7 +1,6 @@
 package com.example.myapplication
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
@@ -51,7 +50,7 @@ class MainActivity : ComponentActivity() {
     private var showStartScreen by mutableStateOf(true)
     private var playerCount by mutableStateOf(2)
 
-    private val gameBoard by viewModels<GameBoard>()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,15 +61,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+
                     // Zeige entweder den Startbildschirm oder das Spielfeld basierend auf dem Zustand an
                     if (showStartScreen) {
-                        StartScreen(gameBoard, onStartButtonClick = {
+                        StartScreen(onStartButtonClick = {
                             showStartScreen = false
+                            playerCount = it
                         })
-                    } else if (gameBoard.winner == "") {
-                        GameBoardContent(gameBoard)
                     } else {
-                        
+                        val viewModel by viewModels<GameBoard> {
+                            GameBoardFactory(playerCount)
+                        }
+                        GameScreen(viewModel)
                     }
                 }
             }
@@ -78,7 +80,7 @@ class MainActivity : ComponentActivity() {
     }
 
     @Composable
-    fun StartScreen(model: GameBoard = viewModel(), onStartButtonClick: (Int) -> Unit) {
+    fun StartScreen(onStartButtonClick: (Int) -> Unit) {
         // Lokale Variable, um den Zustand der Anzahl der Spieler zu verfolgen
         var currentPlayerCount by remember { mutableStateOf(playerCount) }
 
@@ -133,9 +135,7 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     @Preview
-    fun GameBoardContent(model: GameBoard = viewModel()) {
-        var diceResult by remember { mutableStateOf(0) }
-
+    fun GameScreen(model: GameBoard = viewModel()) {
         Box (
             contentAlignment = Alignment.Center,
             modifier = Modifier
@@ -152,7 +152,11 @@ class MainActivity : ComponentActivity() {
                 items(items = model.fields, key = { it.hashCode() }) { field ->
                     FieldRender(field) { clickedField ->
                         if (model.moving && clickedField.clickable) {
-                            model.movePawn(clickedField, diceResult)
+                            model.movePawn(clickedField)
+                            if(model.finished) {
+                                showStartScreen = true
+                            }
+                            model.nextPlayer()
                         }
                     }
                 }
@@ -176,13 +180,16 @@ class MainActivity : ComponentActivity() {
                         onClick = {
                             if (!model.moving) {
                                 // Würfeln und das Ergebnis speichern
-                                diceResult = (1..6).random()
-                                model.initiateTurn(diceResult)
+                                model.rollDice()
+                                model.initiateTurn()
+                                if (!model.moving) {
+                                    model.nextPlayer()
+                                }
                             }
                         }
                     ) {
                         Icon(Icons.Filled.Refresh, contentDescription = "Würfel")
-                        Text("   $diceResult")
+                        Text("   ${model.diceResult}")
                     }
                 }
             }

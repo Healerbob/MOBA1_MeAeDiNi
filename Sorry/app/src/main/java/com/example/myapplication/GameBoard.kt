@@ -1,14 +1,22 @@
 package com.example.myapplication
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
-class Player(val color: String, var name: String, var startIndex: Int)
+data class Player(val color: String, var name: String, var startIndex: Int)
 
-class GameBoard(var playerCount: Int = 2): ViewModel() {
+class GameBoardFactory(private val playerCount: Int) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T =
+        modelClass.getConstructor(Int::class.java)
+            .newInstance(playerCount)
+}
+
+class GameBoard(playerCount: Int = 2): ViewModel() {
     private val playerColors = listOf("r", "g", "b", "y")
     private val players: List<Player> = playerColors.subList(0, playerCount).map { Player(it, "", -1) }
 
@@ -16,12 +24,13 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
 
     val fields: SnapshotStateList<Field> = FieldMapper.createFields()
 
+    var diceResult by mutableStateOf(0)
     var currentPlayer: Player by mutableStateOf(players[0])
     var moving: Boolean by mutableStateOf(false)
 
     private var reRoll = false
 
-    var winner by mutableStateOf("")
+    var finished by mutableStateOf(false)
 
     init {
         players.forEach { player ->
@@ -31,7 +40,11 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
         }
     }
 
-    fun initiateTurn(diceResult: Int) {
+    fun rollDice() {
+        diceResult = (1..6).random()
+    }
+
+    fun initiateTurn() {
         moving = true
 
         if (diceResult == 6) {
@@ -56,10 +69,7 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
             }
             if (availableFields == 0) {
                 moving = false
-                nextPlayer()
             }
-        } else {
-            nextPlayer()
         }
     }
 
@@ -79,7 +89,7 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
         return targetField
     }
 
-    fun movePawn(clickedField: Field, diceResult: Int) {
+    fun movePawn(clickedField: Field) {
         val targetField = getTargetField(clickedField, currentPlayer.color, diceResult)!!
         if (targetField.occupied != "") {
             kickPawn(targetField)
@@ -92,7 +102,6 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
         }
 
         moving = false
-        nextPlayer()
     }
 
     private fun mapPlayerName(color: String): String {
@@ -119,14 +128,14 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
         field.occupied = ""
     }
 
-    private fun nextPlayer() {
-
+    fun nextPlayer() {
         if (!reRoll) {
             currentPlayer = players[(players.indexOf(currentPlayer) + 1) % players.size]
         } else {
             reRoll = false
         }
 
+        diceResult = 0
         checkVictory(currentPlayer.color)
     }
 
@@ -166,8 +175,6 @@ class GameBoard(var playerCount: Int = 2): ViewModel() {
             }
         }
 
-        if (won) {
-            winner = color
-        }
+        finished = won
     }
 }
