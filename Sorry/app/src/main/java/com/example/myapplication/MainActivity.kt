@@ -173,6 +173,8 @@ class MainActivity : ComponentActivity() {
                 }
 
                 Button(
+                    modifier = Modifier
+                        .background(getPlayerColor(model.currentPlayer.id)),
                     onClick = {
                         if (!model.moving) {
                             // Würfeln und das Ergebnis speichern
@@ -184,8 +186,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) {
-                    Icon(Icons.Filled.Refresh, contentDescription = "Würfel")
-                    Text("   ${model.diceResult}")
+                    Icon(
+
+                        imageVector = Icons.Filled.Refresh,
+                        contentDescription = "Würfel"
+                    )
+                    Text(
+                        text = "   ${model.diceResult}"
+                    )
                 }
             }
         }
