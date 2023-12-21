@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,8 +51,6 @@ class MainActivity : ComponentActivity() {
     private var showStartScreen by mutableStateOf(true)
     private var playerCount by mutableStateOf(2)
 
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -61,12 +60,11 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-
                     // Zeige entweder den Startbildschirm oder das Spielfeld basierend auf dem Zustand an
                     if (showStartScreen) {
-                        StartScreen(onStartButtonClick = {
+                        StartScreen(onStartButtonClick = { currentPlayerCount ->
                             showStartScreen = false
-                            playerCount = it
+                            playerCount = currentPlayerCount
                         })
                     } else {
                         val viewModel by viewModels<GameBoard> {
@@ -136,6 +134,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     @Preview
     fun GameScreen(model: GameBoard = viewModel()) {
+        val updated by rememberUpdatedState(model.boardUpdate)
         Box (
             contentAlignment = Alignment.Center,
             modifier = Modifier
