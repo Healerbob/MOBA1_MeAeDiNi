@@ -31,6 +31,8 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
 
     var finished by mutableStateOf(false)
 
+    var boardUpdate by mutableStateOf(0)
+
     init {
         players.forEach { player ->
             val field = fields.find { FieldMapper.findStart(player.id) == it.id }
@@ -134,9 +136,9 @@ class GameBoard(playerCount: Int = 2): ViewModel() {
             currentPlayer = players[(players.indexOf(currentPlayer))]
             reRoll = false
         }
-
-        diceResult = 0
         checkVictory(currentPlayer.id)
+
+        boardUpdate = (boardUpdate + 1) % 2
     }
 
     private fun isStartAvailable(color: String, fieldIndex: Int): Boolean {
