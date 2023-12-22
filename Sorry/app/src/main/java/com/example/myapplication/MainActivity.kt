@@ -47,7 +47,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.myapplication.ui.theme.MyApplicationTheme
 
 class MainActivity : ComponentActivity() {
-    // Zustand, um zu verfolgen, ob der Startbildschirm angezeigt werden soll
     private var showStartScreen by mutableStateOf(true)
     private var playerCount by mutableStateOf(2)
 
@@ -55,12 +54,10 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MyApplicationTheme {
-                // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Zeige entweder den Startbildschirm oder das Spielfeld basierend auf dem Zustand an
                     if (showStartScreen) {
                         StartScreen(onStartButtonClick = { currentPlayerCount ->
                             showStartScreen = false
@@ -79,7 +76,6 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     fun StartScreen(onStartButtonClick: (Int) -> Unit) {
-        // Lokale Variable, um den Zustand der Anzahl der Spieler zu verfolgen
         var currentPlayerCount by remember { mutableStateOf(playerCount) }
 
         Column(
@@ -102,7 +98,6 @@ class MainActivity : ComponentActivity() {
             ) {
                 IconButton(onClick = {
                     if (currentPlayerCount > 2) {
-                        // Sie können hier eine untere Grenze für die Anzahl der Spieler festlegen
                         currentPlayerCount--
                     }
                 }) {
@@ -111,13 +106,11 @@ class MainActivity : ComponentActivity() {
                 Text(text = "$currentPlayerCount", style = typography.titleSmall)
                 IconButton(onClick = {
                     if (currentPlayerCount < 4) {
-                        // Sie können hier eine obere Grenze für die Anzahl der Spieler festlegen
                         currentPlayerCount++
                     }
                 }) {
                     Icon(imageVector = Icons.Default.KeyboardArrowRight, contentDescription = "Add Player")
                 }
-                // Verwenden Sie den Button aus dem lokalen MaterialTheme
                 Button(
                     onClick = {
                         onStartButtonClick(currentPlayerCount)
@@ -163,10 +156,11 @@ class MainActivity : ComponentActivity() {
                         FieldRender(field) { clickedField ->
                             if (model.moving && clickedField.clickable) {
                                 model.movePawn(clickedField)
+                                model.nextPlayer()
+
                                 if(model.finished) {
                                     showStartScreen = true
                                 }
-                                model.nextPlayer()
                             }
                         }
                     }
@@ -177,11 +171,15 @@ class MainActivity : ComponentActivity() {
                         .background(getPlayerColor(model.currentPlayer.id)),
                     onClick = {
                         if (!model.moving) {
-                            // Würfeln und das Ergebnis speichern
                             model.rollDice()
                             model.initiateTurn()
+
                             if (!model.moving) {
                                 model.nextPlayer()
+                            }
+
+                            if(model.finished) {
+                                showStartScreen = true
                             }
                         }
                     }
